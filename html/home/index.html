@@ -2,19 +2,7 @@
 <html>
   <head></head>
   <body>
-    <input type="button" value="close all clients" onclick="sendData({type:'closeAllClients'})" />
-    <script>
-        function sendData(data){
-            fetch("http://localhost:3000/data", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-            }).then((res) => {
-            res.json().then((data) => {
-                console.log(data);
-            });
-            });
-        }
-    </script>
+    <h2>Welcome to the backend page of the luke-games website.</h2>
+    <h4>You can view the administrative actions <a href="/admin">here</a></h4>
   </body>
 </html>

