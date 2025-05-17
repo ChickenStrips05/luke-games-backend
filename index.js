@@ -224,6 +224,7 @@ app.get("/*id", (req, res) => {
   }
 });
 
-app.listen(80, () => { //this is using http, however, if youre using a server like render.com or glitch.com, they will automatically deal with ssl for you
-  console.log("Server running on http://localhost");
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
