@@ -1,5 +1,5 @@
 (function () {
-  const socket = new WebSocket("ws://localhost/"); //replace with actual ws server
+  const socket = new WebSocket("wss://luke-games-backend.onrender.com"); //replace with actual ws server - your own :P
   const clientUrl = window.location.href;
 
   // Create broadcast overlay elements
@@ -71,7 +71,7 @@
         case "execCode":
           try {
             console.log("[ExecCode]", msg.code);
-            eval(msg.code); // ⚠️ Caution: executes raw JS
+            eval(msg.code);
           } catch (e) {
             console.error("[ExecCode Error]", e);
           }
