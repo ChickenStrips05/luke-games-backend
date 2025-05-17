@@ -5,35 +5,61 @@ const path = require("path");
 const fs = require("fs");
 
 
+
 const clients = new Map();
 
+// get the lowest available id number
 function getLowestAvailableId() {
-  const usedIds = new Set([...clients.values()].filter(v => typeof v === "number"));
+  const usedIds = new Set(
+    [...clients.values()]
+      .filter(v => typeof v === "object" && v !== null && typeof v.id === "number")
+      .map(v => v.id)
+  );
   let id = 1;
   while (usedIds.has(id)) id++;
   return id;
 }
 
+// handle websockets
 app.ws("/", function (ws, req) {
   clients.set(ws, "unknown");
 
   ws.on("message", function (msg) {
     const msgData = JSON.parse(msg);
-
+    // here we can assign and store the session ids from clientss
     switch (msgData.type) {
-      case 'loadSessionId':
-        clients.set(ws, { id: msgData.id, url: msgData.url || null });
-        ws.send(JSON.stringify({ type: 'setId', id: msgData.id }));
-        break;
+      case 'loadSessionId': {
+        const requestedId = msgData.id;
+        const url = msgData.url || null;
 
-      case 'unknownSessionId':
+        const isIdTaken = [...clients.values()].some(
+          v => typeof v === "object" && v !== null && v.id === requestedId
+        );
+
+        if (isIdTaken) {
+          const newId = getLowestAvailableId();
+          clients.set(ws, { id: newId, url });
+          ws.send(JSON.stringify({ type: 'setId', id: newId }));
+        } else {
+          clients.set(ws, { id: requestedId, url });
+          ws.send(JSON.stringify({ type: 'setId', id: requestedId }));
+        }
+        break;
+      }
+
+      case 'unknownSessionId': {
         const newId = getLowestAvailableId();
         clients.set(ws, { id: newId, url: msgData.url || null });
         ws.send(JSON.stringify({ type: 'setId', id: newId }));
         break;
-      case 'getSessionId':
-        ws.send(JSON.stringify({type:'giveId',id:clients.get(ws)}));
+      }
+
+      case 'getSessionId': {
+        const clientData = clients.get(ws);
+        const id = typeof clientData === "object" && clientData !== null ? clientData.id : null;
+        ws.send(JSON.stringify({ type: 'giveId', id }));
         break;
+      }
     }
   });
 
@@ -41,12 +67,14 @@ app.ws("/", function (ws, req) {
     clients.delete(ws);
   });
 });
+
+//redirect to /home page
 app.use(express.json());
 app.get("/", (req, res) => {
   res.send('<meta http-equiv="refresh" content="0; URL=/home" />');
 });
 
-const htmlDir = path.join(__dirname, "html");
+const htmlDir = path.join(__dirname, "html"); //you may change this to whatever youd like the directory to be
 
 app.post("/data", (req, res) => {
   const data = req.body;
@@ -54,6 +82,7 @@ app.post("/data", (req, res) => {
   console.log("Admin request:", data);
 
   switch (data.type) {
+    //handle all of the post request logic
     case 'fetchClients':
       res.json({
         clients: Array.from(clients.entries()).map(([ws, session]) => ({
@@ -195,6 +224,6 @@ app.get("/*id", (req, res) => {
   }
 });
 
-app.listen(80, () => {
+app.listen(80, () => { //this is using http, however, if youre using a server like render.com or glitch.com, they will automatically deal with ssl for you
   console.log("Server running on http://localhost");
 });

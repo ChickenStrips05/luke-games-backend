@@ -9,3 +9,8 @@ Once this is deployed, it will have a constant connection with all clients using
 ## Is this a serious project?
 
 No, this isn't made for any actual big projects, this was intended for small projects such as simple glitch websites for your classmates, hence the "luke-games" at [luke-games.glitch.me](https://luke-games.glitch.me). You may use this however you'd like.
+
+## How can I set this up?
+
+You can clone this repository in glitch via the terminal and then running the "refresh" command(it will update your project files)
+You can select this repository in render.com and start using it immediately.
